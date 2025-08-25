@@ -1,0 +1,35 @@
+module priceThresholdDetect #
+                            (parameter WINDOW = 4)
+                            (input logic clk, reset,
+                             input logic [9:0] price_in,
+                             output logic [9:0] out);
+
+logic [9:0] prices [WINDOW-1:0];
+
+localparam SUM_WIDTH = 10 + $clog2(WINDOW);
+logic [SUM_WIDTH-1:0] sum;
+
+always_comb begin
+    sum = 0;
+    for (int i = 0; i < WINDOW; i++) begin
+        sum = sum + prices[i];
+    end
+end
+
+always_ff @(posedge clk) begin
+    if (reset) begin
+        for (int i = 0; i < WINDOW; i++) begin
+            prices[i] <= 0;
+        end
+        out <= '0;
+    end
+    else begin
+        for (int i = WINDOW-1; i > 0; i--) begin
+            prices[i] <= prices[i-1];
+        end
+        prices[0] <= price_in;
+        out <= sum / WINDOW;
+    end
+end        
+
+endmodule
